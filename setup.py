@@ -1,18 +1,21 @@
 from setuptools import setup, find_packages
 
+pkg_name = 'turtle_bot_3'
+
 setup(
-    name='turtle_bot_3',
+    name= pkg_name,
     version='0.0.0',
-    packages=find_packages(),  # Busca paquetes en la raíz
+    packages= [pkg_name], #find_packages()  # Busca paquetes en la raíz - Quitar Entry Points
     data_files=[
-        ('share/ament_index/resource_index/packages', ['resource/turtle_bot_3']),
-        ('share/turtle_bot_3', ['package.xml']),
+        ('share/ament_index/resource_index/packages', ['resource/' + pkg_name]),
+        ('share/'+ pkg_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
+    zip_safe=True,
     entry_points={
         'console_scripts': [
-            'teleop = teleop:main',  # ¡Ahora el módulo está en la raíz!
-            "turtle_bot_interface = turtle_bot_interface:main",
+            "t3_teleop = turtle_bot_3.teleop:main",
+            "t3_interface = turtle_bot_3.turtle_bot_interface:main",
         ],
     },
 )
