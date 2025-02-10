@@ -12,6 +12,7 @@ setup(
     entry_points={
         'console_scripts': [
             'teleop = teleop:main',  # ¡Ahora el módulo está en la raíz!
+            "turtle_bot_interface = turtle_bot_interface:main",
         ],
     },
 )
