@@ -11,7 +11,8 @@ setup(
     install_requires=['setuptools'],
     entry_points={
         'console_scripts': [
-            'teleop = teleop:main',  # ¡Ahora el módulo está en la raíz!
+            'teleop = turtle_bot_3/teleop:main', 
+            'player = turtle_bot_3/teleop:main'
         ],
     },
 )
