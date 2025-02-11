@@ -19,7 +19,7 @@ class TurtleBotTeleop(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('linear_speed', 0.2),
+                ('linear_speed', 10.0),
                 ('angular_speed', 1.0)
             ]
         )
@@ -32,7 +32,7 @@ class TurtleBotTeleop(Node):
         # Temporizador para leer el teclado
         self.timer = self.create_timer(0.1, self.read_keyboard)
         
-        self.get_logger().info("Nodo iniciado. Usa las teclas WASD para mover el robot.")
+        self.get_logger().info("Nodo turtle_bot_teleop iniciado. Usa las teclas WASD para mover el robot.")
 
     def get_key(self):
         tty.setraw(sys.stdin.fileno())
