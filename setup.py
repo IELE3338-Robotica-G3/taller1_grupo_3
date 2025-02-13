@@ -14,8 +14,8 @@ setup(
     zip_safe=True,
     entry_points={
         'console_scripts': [
-            "t3_teleop = turtle_bot_3.teleop:main",
-            "t3_interface = turtle_bot_3.turtle_bot_interface:main",
+            "turtle_bot_teleop = turtle_bot_3.teleop:main",
+            "turtle_bot_interface = turtle_bot_3.turtle_bot_interface:main",
         ],
     },
 )

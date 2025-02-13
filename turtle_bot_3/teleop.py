@@ -16,15 +16,9 @@ class TurtleBotTeleop(Node):
         self.settings = termios.tcgetattr(sys.stdin)
         
         # Parámetros de velocidad
-        self.declare_parameters(
-            namespace='',
-            parameters=[
-                ('linear_speed', 10.0),
-                ('angular_speed', 1.0)
-            ]
-        )
-        self.linear_speed = self.get_parameter('linear_speed').value
-        self.angular_speed = self.get_parameter('angular_speed').value
+        self.linear_speed = self.declare_parameter('linear_speed', 10.0).value
+        self.angular_speed = self.declare_parameter('angular_speed', 5.0).value
+
         
         # Publicador
         self.publisher = self.create_publisher(Twist, '/turtlebot_cmdVel', 10)
@@ -42,22 +36,36 @@ class TurtleBotTeleop(Node):
         else:
             key = ''
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
-        return key
+        return key.lower()
 
     def read_keyboard(self):
         twist = Twist()
         key = self.get_key()
+
         if key == 'w':
-            twist.linear.x = self.linear_speed
+            twist.linear.x = self.linear_speed   # Adelante
+            twist.angular.z = 0.0
+            self.get_logger().info("Movimiento: Adelante")
         elif key == 's':
-            twist.linear.x = -self.linear_speed
+            twist.linear.x = -self.linear_speed  # Atrás
+            twist.angular.z = 0.0
+            self.get_logger().info("Movimiento: Atrás")
         elif key == 'a':
-            twist.angular.z = self.angular_speed
+            twist.angular.z = self.angular_speed # Izquierda
+            twist.linear.x = 0.0
+            self.get_logger().info("Movimiento: Izquierda")
         elif key == 'd':
-            twist.angular.z = -self.angular_speed
-        else:
+            twist.angular.z = -self.angular_speed # Derecha
+            twist.linear.x = 0.0
+            self.get_logger().info("Movimiento: Derecha")
+        elif key == ' ':  # Barra espaciadora
             twist.linear.x = 0.0
             twist.angular.z = 0.0
+            self.get_logger().info("Robot detenido")
+        else:
+            # Mantiene el último movimiento (sin detenerse)
+            return
+        
         self.publisher.publish(twist)
 
     def __del__(self):

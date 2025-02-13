@@ -3,49 +3,28 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import time
+from matplotlib.widgets import Button
 from threading import Thread
+import tkinter as tk
+from tkinter import filedialog
+
 
 class TurtleBotInterfaceNode(Node):
     def __init__(self):
         super().__init__('turtle_bot_interface')
-        
-        # Asks if it wants to save path
-        self.saved_txt = ""
-        self.save_path()
 
         # Echo turtlebot_position
         self.subscription = self.create_subscription(
             Twist, 'turtlebot_position', self.position_callback, 10
         )
+        
         self.positions_x = []
         self.positions_y = []
+        self.trajectory_data = []  # Almacena temporalmente toda la trayectoria
+        self.saved_txt = None  # Nombre del archivo a guardar
 
         self.graph_thread = Thread(target=self.graph_manage)
         self.graph_thread.start()
-        
-        # TODO 0: Guardar la secuencia de acciones que realizó el usuario durante el recorrido del robo
-        # TODO 1: Create a button that asks if the user wants to save de path and assign a name
-        # TODO 2: Asks the user the directory path to save the previous file
-        # TODO 3: create a subscription to a service 
-        
-    def save_path(self):
-        """
-        Asks the user if it wants to save the path of the robot
-        """
-        respuesta = input("Desea guardar el recorrido del turtle_bot_3? (Y/n):").strip().lower()
-        
-        invalid = True
-        while invalid:
-            if respuesta == 'y':
-                self.get_logger().info("Se guardara el recorrido ...")
-                self.saved_txt = input("Digite el nombre del archivo (sin la extension):") + ".txt"
-                invalid = False
-            elif respuesta == 'n':
-                self.get_logger().info("No se guardara el recorrido ...")
-                invalid = False
-            else:
-                respuesta = input("Desea guardar el recorrido del turtle_bot_3? (Y/n):").strip().lower()
 
     def graph_manage(self):
         self.fig, self.ax = plt.subplots()  # Configurar el gráfico
@@ -59,9 +38,47 @@ class TurtleBotInterfaceNode(Node):
         self.ax.legend()
         self.ax.grid()
 
-        time.sleep(0.5)
+        # Botón para guardar recorrido
+        ax_button = plt.axes([0.8, 0.02, 0.15, 0.05])  # [left, bottom, width, height]
+        btn_save = Button(ax_button, 'Save route')
+        btn_save.on_clicked(self.save_path)
+
         ani = FuncAnimation(self.fig, self.update_graph, interval=500)
         plt.show()
+
+    def save_path(self, event=None):
+        """
+        Muestra un cuadro de diálogo para elegir el directorio y nombre del archivo.
+        Al seleccionarlo, guarda toda la trayectoria acumulada.
+        """
+        import tkinter as tk
+        from tkinter import filedialog
+        
+        root = tk.Tk()
+        root.withdraw()  # Oculta la ventana principal de Tkinter
+        
+        # Abre el cuadro de diálogo para guardar el archivo
+        file_path = filedialog.asksaveasfilename(
+            title="Guardar Recorrido del TurtleBot",
+            defaultextension=".txt",
+            filetypes=[("Archivo de texto", "*.txt")]
+        )
+        
+        if file_path:  # Si el usuario selecciona una ruta
+            self.saved_txt = file_path
+            self.get_logger().info(f"Se guardará el recorrido en: {self.saved_txt}")
+            
+            # Guardar toda la trayectoria acumulada hasta ahora
+            try:
+                with open(self.saved_txt, 'w') as archivo:
+                    for x, y in self.trajectory_data:
+                        archivo.write(f'X={x}, Y={y}\n')
+                self.get_logger().info("Trayectoria acumulada guardada correctamente.")
+            except Exception as e:
+                self.get_logger().error(f'Error escribiendo la trayectoria acumulada: {e}')
+        else:  # Si cancela el diálogo
+            self.get_logger().info("No se guardará el recorrido.")
+            self.saved_txt = None
 
     def update_graph(self, frame):
         # Actualizar los datos de la línea
@@ -73,20 +90,23 @@ class TurtleBotInterfaceNode(Node):
 
     def position_callback(self, msg):
         """
-        Actualiza los datos de la grafica y guardarlos en el archivo .txt
+        Actualiza los datos de la grafica y guarda los datos en trajectory_data
         """
         x = msg.linear.x
         y = msg.linear.y
         # Data for graph
         self.positions_x.append(x)
         self.positions_y.append(y)
-        # Data for txt
-        try:
-            with open(self.saved_txt, 'a') as archivo:
-                archivo.write(f'{msg}\n')  # Guarda los datos como una nueva línea
-            #self.get_logger().info(f'Datos guardados: {msg}') #TODO: Cambiar msg por x, y
-        except Exception as e:
-            self.get_logger().error(f'Error escribiendo en el archivo: {e}')
+        # Data for internal storage
+        self.trajectory_data.append((x, y))  # Almacena toda la trayectoria
+
+        # Data for txt (solo si ya se eligió un archivo)
+        if self.saved_txt:
+            try:
+                with open(self.saved_txt, 'a') as archivo:
+                    archivo.write(f'X={x}, Y={y}\n')
+            except Exception as e:
+                self.get_logger().error(f'Error escribiendo en el archivo: {e}')
 
         self.get_logger().info(f"Position updated: X={x}, Y={y}")
 
@@ -99,7 +119,8 @@ class TurtleBotInterfaceNode(Node):
             # Cleanup
             plt.close()
             self.destroy_node()
-            rclpy.shutdown()
+            if rclpy.ok():
+                rclpy.shutdown()
 
 def main(args=None):
     rclpy.init()
