@@ -8,7 +8,7 @@ from matplotlib.widgets import Button
 from threading import Thread
 import tkinter as tk
 from tkinter import filedialog
-
+import time
 
 class TurtleBotInterfaceNode(Node):
     def __init__(self):
@@ -19,8 +19,13 @@ class TurtleBotInterfaceNode(Node):
         super().__init__('turtle_bot_interface')
 
         # Suscripción al tópico turtlebot_position
-        self.subscription = self.create_subscription(
+        self.subscription_position = self.create_subscription(
             Twist, 'turtlebot_position', self.position_callback, 10
+        )
+
+        # Suscripción al tópico turtlebot_cmdVel
+        self.subscription_velocity = self.create_subscription(
+            Twist, '/turtlebot_cmdVel', self.cmdVel_callback, 10
         )
         
         # Almacenamiento de datos de trayectoria
@@ -29,24 +34,38 @@ class TurtleBotInterfaceNode(Node):
         self.trajectory_data = []  # Almacena toda la trayectoria
         self.saved_txt = None  # Ruta del archivo donde se guarda la trayectoria
 
+        # Pregunta inicial para guardar archivo
+        self.ask_save_initial()  # Pregunta si desea guardar el archivo al iniciar
+
         # Hilo para gestionar la gráfica sin bloquear el nodo ROS
         self.graph_thread = Thread(target=self.graph_manage)
         self.graph_thread.start()
 
-        # TODO 0: Guardar la secuencia de acciones que realizó el usuario durante el recorrido del robo
-        # TODO 1: Create a button that asks if the user wants to save de path and assign a name
-        # TODO 2: Asks the user the directory path to save the previous file
-        # TODO 3: create a subscription to a service 
+    def ask_save_initial(self):
+        """
+        Pregunta al usuario si desea guardar el archivo al iniciar el nodo.
+        Si la respuesta es sí, pregunta el nombre del archivo y el directorio.
+        """
+        root = tk.Tk()
+        root.withdraw()  # Oculta la ventana principal de Tkinter
+        save_decision = tk.messagebox.askyesno("Guardar Recorrido", "¿Desea guardar el recorrido del robot?")
+
+        if save_decision:
+            self.saved_txt = filedialog.asksaveasfilename(
+                title="Guardar Recorrido del TurtleBot",
+                defaultextension=".txt",
+                filetypes=[("Archivo de texto", "*.txt")]
+            )
+            if self.saved_txt:
+                self.get_logger().info(f"Se guardará el recorrido en: {self.saved_txt}")
+                self.initial_time = time.time() # Inicia a tomar el tiempo de partida
+            else:
+                self.get_logger().info("No se especificó archivo. No se guardará el recorrido.")
 
     def graph_manage(self):
-        """
-        Gestiona la configuración y actualización del gráfico de trayectoria.
-        Ejecutado en un hilo separado para no bloquear el nodo.
-        """
-        self.fig, self.ax = plt.subplots()  # Configurar el gráfico
-        self.line, = self.ax.plot([], [], 'b-o', label="Trayectoria")  # Línea inicial
+        self.fig, self.ax = plt.subplots()
+        self.line, = self.ax.plot([], [], 'b-o', label="Trayectoria")
 
-        # Configuración del gráfico
         self.ax.set_title("Turtlebot Position")
         self.ax.set_xlim(-2.5, 2.5)
         self.ax.set_ylim(-2.5, 2.5)
@@ -55,96 +74,46 @@ class TurtleBotInterfaceNode(Node):
         self.ax.legend()
         self.ax.grid()
 
-        # Botón para guardar recorrido
-        ax_button = plt.axes([0.8, 0.02, 0.15, 0.05])  # [left, bottom, width, height]
-        btn_save = Button(ax_button, 'Save route')
-        btn_save.on_clicked(self.save_path)  # Asocia el botón a save_path()
-
-        ani = FuncAnimation(self.fig, self.update_graph, interval=500)  # Actualiza la gráfica
-        plt.show()  # Muestra la ventana del gráfico
-
-    def save_path(self, event=None):
-        """
-        Muestra un cuadro de diálogo para elegir el directorio y nombre del archivo.
-        Al seleccionarlo, guarda toda la trayectoria acumulada.
-        """
-        root = tk.Tk()
-        root.withdraw()  # Oculta la ventana principal de Tkinter
-        
-        # Abre el cuadro de diálogo para guardar el archivo
-        file_path = filedialog.asksaveasfilename(
-            title="Guardar Recorrido del TurtleBot",
-            defaultextension=".txt",
-            filetypes=[("Archivo de texto", "*.txt")]
-        )
-        
-        if file_path:  # Si el usuario selecciona una ruta
-            self.saved_txt = file_path
-            self.get_logger().info(f"Se guardará el recorrido en: {self.saved_txt}")
-            
-            # Guardar toda la trayectoria acumulada hasta ahora
-            try:
-                with open(self.saved_txt, 'w') as archivo:
-                    for x, y in self.trajectory_data:
-                        archivo.write(f'X={x}, Y={y}\n')
-                self.get_logger().info("Trayectoria acumulada guardada correctamente.")
-            except Exception as e:
-                self.get_logger().error(f'Error escribiendo la trayectoria acumulada: {e}')
-        else:  # Si cancela el diálogo
-            self.get_logger().info("No se guardará el recorrido.")
-            self.saved_txt = None
+        ani = FuncAnimation(self.fig, self.update_graph, interval=500)  
+        plt.show()
 
     def update_graph(self, frame):
-        """
-        Actualiza el gráfico en tiempo real con las posiciones acumuladas.
-        """
-        self.line.set_data(self.positions_x, self.positions_y)  # Actualiza la línea
-        self.ax.relim()  # Recalcula los límites del gráfico
-        self.ax.autoscale_view()  # Ajusta la vista automáticamente
+        self.line.set_data(self.positions_x, self.positions_y)  
+        self.ax.relim()  
+        self.ax.autoscale_view()  
         return self.line,
 
     def position_callback(self, msg):
-        """
-        Callback que se ejecuta al recibir un mensaje de 'turtlebot_position'.
-        Actualiza las coordenadas y guarda la trayectoria completa.
-        """
         x = msg.linear.x
         y = msg.linear.y
-        # Datos para el gráfico en tiempo real
         self.positions_x.append(x)
         self.positions_y.append(y)
-        # Almacenamiento interno de la trayectoria completa
         self.trajectory_data.append((x, y))
+        self.get_logger().info(f"Position updated: X={x}, Y={y}")
 
-        # Guardado en archivo (si ya se seleccionó uno)
+    def cmdVel_callback(self, msg):
         if self.saved_txt:
+            lin_x = msg.linear.x
+            ang_z = msg.angular.z
+            elapsed = round(time.time() - self.initial_time, 3)
             try:
                 with open(self.saved_txt, 'a') as archivo:
-                    archivo.write(f'X={x}, Y={y}\n')
+                    archivo.write(f't={elapsed}, lin_x={lin_x}, ang_z={ang_z}\n')
             except Exception as e:
                 self.get_logger().error(f'Error escribiendo en el archivo: {e}')
 
-        self.get_logger().info(f"Position updated: X={x}, Y={y}")
-
     def spin_node(self):
-        """
-        Mantiene el nodo en ejecución hasta que se interrumpe con Ctrl+C.
-        Maneja el cierre de manera segura.
-        """
         try:
             rclpy.spin(self)
         except KeyboardInterrupt:
             pass
         finally:
-            plt.close()  # Cierra la ventana de la gráfica
-            self.destroy_node()  # Destruye el nodo ROS
+            plt.close()  
+            self.destroy_node()  
             if rclpy.ok():
-                rclpy.shutdown()  # Apaga rclpy correctamente
+                rclpy.shutdown()  
 
 def main(args=None):
-    """
-    Función principal que inicializa el nodo y lo ejecuta.
-    """
     rclpy.init()
     node = TurtleBotInterfaceNode()
     node.spin_node()

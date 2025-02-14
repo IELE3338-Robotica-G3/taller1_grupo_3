@@ -30,7 +30,7 @@ class TurtleBotTeleop(Node):
         self.publisher = self.create_publisher(Twist, '/turtlebot_cmdVel', 10)
         
         # Temporizador para verificar continuamente las teclas presionadas
-        self.timer = self.create_timer(0.1, self.read_keyboard)
+        self.timer = self.create_timer(0.5, self.read_keyboard)
         
         self.get_logger().info("Nodo turtle_bot_teleop iniciado. Usa las teclas WASD para mover el robot.")
 
@@ -80,13 +80,10 @@ class TurtleBotTeleop(Node):
             twist.angular.z = -self.angular_speed # Derecha
             twist.linear.x = 0.0
             self.get_logger().info("Movimiento: Derecha")
-        elif key == ' ':  # Barra espaciadora para detener el robot
-            twist.linear.x = 0.0
+        else: 
+            twist.linear.x = 0.0 # Si no se presiona ninguna tecla se detiene el robot
             twist.angular.z = 0.0
             self.get_logger().info("Robot detenido")
-        else:
-            # Si no se presiona ninguna tecla relevante, mantiene el último movimiento
-            return
         
         # Publica el mensaje Twist con el movimiento correspondiente
         self.publisher.publish(twist)
