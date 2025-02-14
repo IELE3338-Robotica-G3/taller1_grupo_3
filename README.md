@@ -49,8 +49,6 @@ ros2 run turtle_bot_3 turtle_bot_interface
 ### 2. turtle_bot_teleop
 Este nodo permite controlar el TurtleBot mediante el teclado.
 
-- **Publicación:**
-  - `/turtlebot_cmdVel` (`geometry_msgs/msg/Twist`): Envía comandos de velocidad lineal y angular.
 - **Controles del teclado:**
   - `W`: Adelante
   - `S`: Atrás
