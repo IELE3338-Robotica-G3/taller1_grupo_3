@@ -16,6 +16,7 @@ setup(
         'console_scripts': [
             "turtle_bot_teleop = turtle_bot_3.teleop:main",
             "turtle_bot_interface = turtle_bot_3.turtle_bot_interface:main",
+            'turtle_bot_player = turtle_bot_3.turtle_bot_player:main',
         ],
     },
 )

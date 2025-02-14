@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import rclpy
+import os
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ from threading import Thread
 import tkinter as tk
 from tkinter import filedialog
 import time
+from std_srvs.srv import Trigger
 
 class TurtleBotInterfaceNode(Node):
     def __init__(self):
@@ -27,6 +29,10 @@ class TurtleBotInterfaceNode(Node):
         self.subscription_velocity = self.create_subscription(
             Twist, '/turtlebot_cmdVel', self.cmdVel_callback, 10
         )
+
+        # Cliente para llamar al servicio de reproducción en turtle_bot_player
+        self.client_player = self.create_client(Trigger, 'play_recording')
+
         
         # Almacenamiento de datos de trayectoria
         self.positions_x = []  # Coordenadas X para el gráfico
@@ -34,12 +40,70 @@ class TurtleBotInterfaceNode(Node):
         self.trajectory_data = []  # Almacena toda la trayectoria
         self.saved_txt = None  # Ruta del archivo donde se guarda la trayectoria
 
+        # Pregunta inicial para reproducir archivo guardado
+        self.replaying = self.ask_play_trajectory()  # Pregunta si desea reproducir una trayectoria guardada
+
         # Pregunta inicial para guardar archivo
-        self.ask_save_initial()  # Pregunta si desea guardar el archivo al iniciar
+        if not self.replaying:
+            self.ask_save_initial()  # Pregunta si desea guardar el archivo al iniciar
 
         # Hilo para gestionar la gráfica sin bloquear el nodo ROS
         self.graph_thread = Thread(target=self.graph_manage)
         self.graph_thread.start()
+
+    def ask_play_trajectory(self):
+        """
+        Pregunta al usuario si desea reproducir una trayectoria.
+        Si la respuesta es sí, solicita el archivo y llama al servicio.
+        """
+        root = tk.Tk()
+        root.withdraw()  # Oculta la ventana principal de Tkinter
+        play_decision = tk.messagebox.askyesno("Reproducir Recorrido", "¿Desea reproducir un recorrido guardado?")
+
+        if play_decision:
+            # Solicita el archivo .txt con la trayectoria guardada
+            file_path = filedialog.askopenfilename(
+                title="Seleccionar Recorrido Guardado",
+                filetypes=[("Archivo de texto", "*.txt")]
+            )
+            if file_path:
+                self.get_logger().info(f"Reproduciendo recorrido desde: {file_path}")
+                self.set_file_path_param(file_path)
+                self.call_player_service()
+                return True
+            else:
+                self.get_logger().info("No se seleccionó ningún archivo.")
+                return False
+        else:
+            return False
+        
+    def set_file_path_param(self, file_path):
+        """
+        Configura el parámetro 'file_path' en turtle_bot_player
+        """
+        self.get_logger().info("Estableciendo ruta del archivo en turtle_bot_player...")
+        set_param_cmd = f"ros2 param set /turtle_bot_player file_path '{file_path}'"
+        self.get_logger().info(set_param_cmd)
+        os.system(set_param_cmd)
+
+    def call_player_service(self):
+        """
+        Llama al servicio en turtle_bot_player para iniciar la reproducción.
+        """
+        while not self.client_player.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Esperando a que el servicio de reproducción esté disponible...')
+
+        request = Trigger.Request()
+        future = self.client_player.call_async(request)
+
+        def callback(future):
+            try:
+                response = future.result()
+                self.get_logger().info(f"Respuesta del servicio: {response.message}")
+            except Exception as e:
+                self.get_logger().error(f"Servicio falló: {e}")
+
+        future.add_done_callback(callback)
 
     def ask_save_initial(self):
         """
