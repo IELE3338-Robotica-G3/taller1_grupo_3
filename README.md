@@ -19,10 +19,12 @@ Este paquete permite controlar el TurtleBot en CoppeliaSim usando ROS 2. Incluye
   - [Dependencias](#dependencias)
   - [Clonación e Instalación](#clonación-e-instalación)
 - [Ejecución](#ejecución)
+- [Colaboradores](#colaboradores)
+- [Repositorio](#repositorio)
 
 ---
 
-## 📚 **Descripción**
+## Descripción
 Este paquete permite:
 - Controlar el TurtleBot con el teclado.
 - Visualizar en tiempo real la trayectoria del robot.
@@ -32,9 +34,9 @@ Este paquete permite:
 
 ---
 
-## 📦 **Nodos**
+## Nodos
 
-### 🕹️ `turtle_bot_teleop`
+### `turtle_bot_teleop`
 Nodo de teleoperación para controlar el TurtleBot usando el teclado.
 - Solicita al usuario la velocidad lineal y angular al iniciar.
 - Publica comandos de velocidad en el tópico `/turtlebot_cmdVel`.
@@ -50,7 +52,7 @@ Nodo de teleoperación para controlar el TurtleBot usando el teclado.
 
 ---
 
-### 📊 `turtle_bot_interface`
+### `turtle_bot_interface`
 Nodo de interfaz para visualizar y gestionar la trayectoria del TurtleBot.
 - Muestra la trayectoria en tiempo real usando Matplotlib.
 - Pregunta al usuario si desea:
@@ -73,7 +75,7 @@ Nodo de interfaz para visualizar y gestionar la trayectoria del TurtleBot.
 
 ---
 
-### 🔁 `turtle_bot_player`
+### `turtle_bot_player`
 Nodo que reproduce una trayectoria guardada para el TurtleBot2.
 - Lee un archivo `.txt` con la secuencia de acciones.
 - Publica comandos de velocidad para reproducir la trayectoria.
@@ -89,9 +91,9 @@ Nodo que reproduce una trayectoria guardada para el TurtleBot2.
 
 ---
 
-## 🔧 **Servicios**
+## Servicios
 
-### 🎥 `play_recording`
+### `play_recording`
 - **Tipo:** `std_srvs/Trigger`
 - **Descripción:** Inicia la reproducción de una trayectoria guardada.
 - **Proveedor:** Nodo `turtle_bot_player`.
@@ -103,16 +105,16 @@ Nodo que reproduce una trayectoria guardada para el TurtleBot2.
 
 ---
 
-## ⚙️ **Instalación**
+## Instalación
 
-### 📋 **Requisitos**
+### Requisitos
 - **Ubuntu 22.04 LTS**
 - **ROS 2 Humble**
 - **Python 3.10 o superior**
 
 ---
 
-### 📥 **Dependencias**
+### Dependencias
 Asegúrate de tener instaladas las siguientes dependencias:
 
 ```bash
@@ -127,7 +129,7 @@ sudo apt install ros-humble-rclpy ros-humble-geometry-msgs python3-matplotlib py
 
 ---
 
-### 📂 **Clonación e Instalación**
+### Clonación e Instalación
 1. Clona el repositorio en tu espacio de trabajo de ROS 2:
     ```bash
     cd ~/ros2_ws/src
@@ -147,7 +149,7 @@ sudo apt install ros-humble-rclpy ros-humble-geometry-msgs python3-matplotlib py
 
 ---
 
-## 🚀 **Ejecución**
+## Ejecución
 
 ### 1. **Nodo de Teleoperación**
 ```bash
@@ -166,7 +168,7 @@ ros2 run turtle_bot_3 turtle_bot_interface
 
 ---
 
-## 🤝 **Colaboradores**
+## Colaboradores
 - **Alan Villa** (loquesea@uniandes.edu.co)
 - **Jaime Rueda** (loquesea@uniandes.edu.co)
 - **Jesus Sandoval** (je.sandovals1@uniandes.edu.co)
@@ -174,6 +176,6 @@ ros2 run turtle_bot_3 turtle_bot_interface
 
 ---
 
-## 🌐 **Repositorio**
+## Repositorio
 [Turtle Bot 3 - IELE3338-Robotica-G3](https://github.com/IELE3338-Robotica-G3/taller1_grupo_3)
 
