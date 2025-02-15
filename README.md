@@ -169,10 +169,10 @@ ros2 run turtle_bot_3 turtle_bot_interface
 ---
 
 ## Colaboradores
-- **Alan Villa** (loquesea@uniandes.edu.co)
-- **Jaime Rueda** (loquesea@uniandes.edu.co)
+- **Alan Villa** (a.villap@uniandes.edu.co)
+- **Jaime Rueda** (j.ruedap@uniandes.edu.co)
 - **Jesus Sandoval** (je.sandovals1@uniandes.edu.co)
-- **Leonardo Sawamoto** (loquesea@uniandes.edu.co)
+- **Leonardo Sawamoto** (l.sawamoto@uniandes.edu.co)
 
 ---
 
