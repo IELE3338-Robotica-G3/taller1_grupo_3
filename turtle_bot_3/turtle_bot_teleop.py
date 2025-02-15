@@ -18,13 +18,16 @@ class TurtleBotTeleop(Node):
         Inicializa el nodo de teleoperación y configura el terminal.
         """
         super().__init__('turtle_bot_teleop')
+
+        linear_speed = float(input("Cual desea que sea la velocidad lineal en x?: ")) 
+        angular_speed = float(input("Cual desea que sea la velocidad angular en z?: "))
         
         # Configuración inicial del terminal para lectura no bloqueante de teclas
         self.settings = termios.tcgetattr(sys.stdin)
         
         # Parámetros de velocidad para movimiento lineal y angular
-        self.linear_speed = self.declare_parameter('linear_speed', 10.0).value
-        self.angular_speed = self.declare_parameter('angular_speed', 5.0).value
+        self.linear_speed = self.declare_parameter('linear_speed', linear_speed).value
+        self.angular_speed = self.declare_parameter('angular_speed', angular_speed).value
         
         # Publicador de mensajes Twist en el tópico /turtlebot_cmdVel
         self.publisher = self.create_publisher(Twist, '/turtlebot_cmdVel', 10)

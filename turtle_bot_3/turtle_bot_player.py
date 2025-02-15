@@ -47,27 +47,22 @@ class TurtleBotPlayerNode(Node):
             with open(file_path, 'r') as archivo:
                 self.get_logger().info("Archivo abierto exitosamente")
                 lines = archivo.readlines()
-                prev_time = 0  # Tiempo inicial de referencia
 
                 for line in lines:
                     # Parseo de la línea
                     data = line.strip().split(', ')
-                    t = float(data[0].split('=')[1])
                     lin_x = float(data[1].split('=')[1])
                     ang_z = float(data[2].split('=')[1])
 
-                    # Calcula el tiempo de espera
-                    delta_t = t - prev_time
-                    time.sleep(delta_t)  # Espera el tiempo necesario
+                    time.sleep(0.5)  # Espera el tiempo necesario
 
                     # Publica el comando de velocidad
                     twist_msg = Twist()
                     twist_msg.linear.x = lin_x
                     twist_msg.angular.z = ang_z
-                    self.get_logger().info(f"Send: linear_x={lin_x}, angular_z={ang_z}, sleep={delta_t}")
+                    self.get_logger().info(f"Send: linear_x={lin_x}, angular_z={ang_z}")
                     self.publisher.publish(twist_msg)
 
-                    prev_time = t  # Actualiza el tiempo anterior
                 self.get_logger().info("Reproducción terminada")
         except Exception as e:
             self.get_logger().info(f"Error: {e}")
