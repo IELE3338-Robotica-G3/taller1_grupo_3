@@ -11,17 +11,20 @@ class TurtleBotTeleop(Node):
     """
     Nodo de teleoperación para controlar el TurtleBot usando el teclado.
     Permite mover el robot en las direcciones adelante, atrás, izquierda y derecha,
-    así como detenerlo con la barra espaciadora.
+    así como detenerlo si no se presiona ninguna tecla válida.
     """
     def __init__(self):
         """
         Inicializa el nodo de teleoperación y configura el terminal.
+        Solicita al usuario las velocidades lineal y angular.
+        Configura el publicador y el temporizador para leer el teclado.
         """
         super().__init__('turtle_bot_teleop')
 
-        linear_speed = float(input("Cual desea que sea la velocidad lineal en x?: ")) 
-        angular_speed = float(input("Cual desea que sea la velocidad angular en z?: "))
-        
+        # Solicita al usuario las velocidades lineal y angular
+        linear_speed = float(input("¿Cuál desea que sea la velocidad lineal en x?: ")) 
+        angular_speed = float(input("¿Cuál desea que sea la velocidad angular en z?: "))
+
         # Configuración inicial del terminal para lectura no bloqueante de teclas
         self.settings = termios.tcgetattr(sys.stdin)
         
@@ -40,6 +43,7 @@ class TurtleBotTeleop(Node):
     def get_key(self):
         """
         Lee una tecla presionada sin bloquear el flujo del programa.
+        Utiliza termios y select para cambiar a modo de lectura no bloqueante.
         
         Returns:
             str: La tecla presionada en minúsculas o cadena vacía si no se presionó ninguna.
@@ -62,10 +66,12 @@ class TurtleBotTeleop(Node):
         - S: Atrás
         - A: Girar a la izquierda
         - D: Girar a la derecha
-        - Espacio: Detener el robot
+        - (Cualquier otra tecla o sin tecla): Detener el robot
+        
+        Publica el mensaje Twist con la velocidad lineal y angular correspondiente.
         """
         twist = Twist()  # Inicializa el mensaje Twist
-        key = self.get_key()
+        key = self.get_key()  # Obtiene la tecla presionada
 
         if key == 'w':
             twist.linear.x = self.linear_speed   # Adelante
@@ -84,7 +90,8 @@ class TurtleBotTeleop(Node):
             twist.linear.x = 0.0
             self.get_logger().info("Movimiento: Derecha")
         else: 
-            twist.linear.x = 0.0 # Si no se presiona ninguna tecla se detiene el robot
+            # Si no se presiona ninguna tecla válida, se detiene el robot
+            twist.linear.x = 0.0
             twist.angular.z = 0.0
             self.get_logger().info("Robot detenido")
         
@@ -102,6 +109,7 @@ class TurtleBotTeleop(Node):
 def main(args=None):
     """
     Función principal que inicializa el nodo y lo mantiene en ejecución hasta que se interrumpa.
+    Maneja la interrupción con Ctrl+C de manera segura.
     """
     rclpy.init(args=args)
     node = TurtleBotTeleop()
